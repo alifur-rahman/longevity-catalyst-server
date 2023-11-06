@@ -4,6 +4,7 @@ import { Op, Optional } from "sequelize";
 import { NullishPropertiesOf } from "sequelize/types/utils";
 import config from "../../../config";
 import ApiError from "../../../errors/ApiError";
+import { handleFileUpload } from "../../../helpers/uploadHelpers";
 import { IUser } from "./user.interface";
 import { User } from "./user.model";
 
@@ -12,23 +13,39 @@ const createUser = async (
 ) => {
   if (!userData?.password) {
     throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Password is required to create a user"
+      httpStatus.CONFLICT,
+      "password. Password is required to create a user"
     );
+    console.log(userData);
   }
-
   // Check if the username or email is already in use
-  const existingUser = await User.findOne({
+  const existingUsername = await User.findOne({
     where: {
-      [Op.or]: [{ username: userData.username }, { email: userData.email }],
+      [Op.or]: [{ username: userData.username }],
     },
   });
 
-  if (existingUser) {
+  if (existingUsername) {
     throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Username or email is already in use"
+      httpStatus.CONFLICT,
+      "username.Username is already use !"
     );
+  }
+
+  // Check if Email is already in use
+  const existingEmail = await User.findOne({
+    where: {
+      [Op.or]: [{ email: userData.email }],
+    },
+  });
+
+  if (existingEmail) {
+    throw new ApiError(httpStatus.CONFLICT, "email.Email is already use !");
+  }
+  // const readyToStore = userData;
+  if (userData.profile_photo) {
+    const imagePath = await handleFileUpload(userData.profile_photo);
+    userData.profile_photo = imagePath;
   }
 
   // Hash the password
@@ -47,7 +64,7 @@ const createUser = async (
 // For all users
 const getUsers = async () => {
   const users = await User.findAll({
-    attributes: { exclude: ["password"] },
+    attributes: { exclude: ["password", "id"] },
   });
   return users;
 };

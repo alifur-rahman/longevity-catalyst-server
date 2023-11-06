@@ -1,31 +1,41 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
-import { IUser } from "./user.interface";
 import { userService } from "./user.services";
 
 // Create a new user
-const createUser = catchAsync(async (req: Request, res: Response) => {
-  try {
-    const userData: IUser = req.body;
-    const user = await userService.createUser(userData);
+const createUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userData = req.body;
+      // profile picture uploading system
+      if (req.file) {
+        userData.profile_photo = req.file;
+      }
+      const user = await userService.createUser(userData);
 
-    const modifyData = user.dataValues;
+      const modifyData = user.dataValues;
 
-    const userDetails = (({ password, ...rest }) => rest)(modifyData);
+      const userDetails = (({ password, ...rest }) => rest)(modifyData);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "User created successfully!",
-      data: userDetails,
-    });
-  } catch (error) {
-    console.log(error);
+      sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User created successfully!",
+        data: userDetails,
+      });
+    } catch (error) {
+      sendResponse(res, {
+        statusCode: httpStatus.CONFLICT,
+        success: false,
+        message: `${error}`,
+        data: error,
+      });
+    }
   }
-});
+);
 
 // Get all users
 const getUsers = catchAsync(async (req: Request, res: Response) => {

@@ -3,6 +3,9 @@ import { DataTypes, Model, Op } from "sequelize";
 import sequelize from "../../../config/sequelize-config";
 
 class User extends Model {
+  accessToken: string;
+  refreshToken: string;
+  id: any;
   static async isUserExist(identifier: string) {
     return User.findOne({
       where: {
@@ -11,7 +14,7 @@ class User extends Model {
     });
   }
   async isPasswordMatch(password: string, hashedPassword: string) {
-    console.log("Calling isPasswordMatch with Password: ", password);
+    // console.log("Calling isPasswordMatch with Password: ", password);
     return bcrypt.compare(password, hashedPassword);
   }
 }

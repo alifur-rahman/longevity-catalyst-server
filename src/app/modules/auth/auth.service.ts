@@ -6,14 +6,10 @@ import config from "../../../config";
 import ApiError from "../../../errors/ApiError";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import { User } from "../user/user.model";
-import {
-  ILoginUser,
-  ILoginUserResponse,
-  IRefreshTokenResponse,
-} from "./auth.interface";
+import { ILoginUser, IRefreshTokenResponse } from "./auth.interface";
 import RefreshToken from "./refreshToken.model";
 
-const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
+const loginUser = async (payload: ILoginUser): Promise<any> => {
   const { identifier, password } = payload;
   if (!identifier) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Username or email is required");
@@ -30,7 +26,7 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
   if (!user) {
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
-      `No user found with username or email: ${identifier}`
+      `User not found with this Credentials`
     );
   }
 
@@ -41,7 +37,10 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
   );
 
   if (!isPasswordValid) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid credentials");
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      `User not found with this Credentials`
+    );
   }
 
   const { id: userId, role: userRole } = user as any;
@@ -80,8 +79,31 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
     });
   }
 
+  // return users infomation
+  let userInfo = null;
+
+  const NewUserInfo = await User.findOne({
+    where: { id: user.id },
+    attributes: { exclude: ["password"] },
+  });
+  if (NewUserInfo) {
+    const additionalData = {
+      accessToken: accessToken, // Add any additional properties you need
+    };
+
+    userInfo = {
+      ...NewUserInfo.dataValues, // Spread the user data properties
+      ...additionalData, // Spread the additional data
+    };
+  }
+
+  // const tokens = {
+  //   accessToken: accessToken,
+  //   refreshToken: refreshToken,
+  // };
+
   return {
-    accessToken,
+    userInfo,
     refreshToken,
   };
 };
@@ -104,7 +126,7 @@ const refreshToken = async (token: string): Promise<IRefreshTokenResponse> => {
   const isUserExist = await User.findByPk(userId);
 
   if (!isUserExist) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User does not exist");
+    throw new ApiError(httpStatus.UNAUTHORIZED, "User does not exist");
   }
 
   // Generate a new access token

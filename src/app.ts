@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { Application } from "express";
+import express, { Application, NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 
 import bodyParser from "body-parser";
@@ -34,6 +36,14 @@ app.use("/api/v1", routers);
 
 app.use(globalErrorHandler);
 
+// Server Start Message
+app.get("/", async (req: Request, res: Response, next: NextFunction) => {
+  res.status(httpStatus.OK).json({
+    success: true,
+    message: "Welcome HTTP SERVER",
+  });
+});
+
 sequelize
   .authenticate()
   .then(() => {
@@ -44,7 +54,7 @@ sequelize
   });
 
 // Handle Not Found
-app.use((req, res) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(httpStatus.NOT_FOUND).json({
     success: false,
     message: "Resource not found",

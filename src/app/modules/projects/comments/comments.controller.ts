@@ -7,8 +7,15 @@ import { commentService } from "./comments.services";
 
 const createComment = catchAsync(async (req: Request, res: Response) => {
   try {
+    const token = req.headers.authorization;
+    if (!token) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
+    }
+
     const commentData = req.body;
+
     const result = await commentService.createComment(commentData);
+
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
@@ -16,7 +23,6 @@ const createComment = catchAsync(async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -40,7 +46,6 @@ const updateComment = catchAsync(async (req: Request, res: Response) => {
       throw new ApiError(httpStatus.BAD_REQUEST, "Project not found");
     }
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -55,7 +60,6 @@ const deleteComment = catchAsync(async (req: Request, res: Response) => {
       res.status(404).json({ error: "Project not found" });
     }
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -70,7 +74,6 @@ const getSingleComment = catchAsync(async (req: Request, res: Response) => {
       res.status(404).json({ error: "Project not found" });
     }
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

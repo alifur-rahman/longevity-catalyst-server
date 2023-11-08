@@ -2,6 +2,7 @@ import { createServer, Server } from "http";
 import app from "./app";
 import config from "./config/index";
 import sequelize from "./config/sequelize-config";
+import { errorlogger, logger } from "./shared/logger";
 
 let server: Server;
 
@@ -11,16 +12,16 @@ async function main() {
     server = createServer(app);
 
     server.listen(config.port, () => {
-      console.log(`Lc listen on port ${config.port}`);
+      logger.info(`Lc listen on port ${config.port}`);
     });
   } catch (error) {
-    console.log(`Failed to connect database ${error}`);
+    errorlogger.error(`Failed to connect database`, error);
   }
 
   process.on("unhandledRejection", (error) => {
     if (server) {
       server.close(() => {
-        console.log(error);
+        errorlogger.error(error);
         process.exit(1);
       });
     } else {

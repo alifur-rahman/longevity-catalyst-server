@@ -1,8 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Project from "./project.model";
 
-const createProject = async (projectData: any) => {
-  return Project.create(projectData);
+import { Project } from "./project.model";
+
+const createProject = async (projectData: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    Project.create(projectData)
+      .then((project) => {
+        resolve(project);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
 };
 
 const updateProject = async (projectId: string, projectData: any) => {

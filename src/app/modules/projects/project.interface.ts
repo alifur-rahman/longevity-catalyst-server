@@ -24,6 +24,8 @@ interface ProjectData {
   expectedDuration: string;
   timeToStart: string;
   projectSubmitted: string;
+  upVoteCount: number;
+  downVoteCount: number;
 }
 
 export default ProjectData;

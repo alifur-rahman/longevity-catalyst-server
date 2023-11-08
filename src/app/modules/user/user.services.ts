@@ -44,11 +44,19 @@ const createUser = async (
   }
   // const readyToStore = userData;
   if (userData.profile_photo) {
-    const imagePath = await handleFileUpload(userData.profile_photo);
-    userData.profile_photo = imagePath;
+    await handleFileUpload(userData.profile_photo, config.FILE_UPLOAD_DIR)
+      .then((imagePath) => {
+        userData.profile_photo = imagePath;
+      })
+      .catch(() => {
+        // Handle the rejected promise
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          "profile_photo.Email is already use !"
+        );
+      });
   }
 
-  // Hash the password
   const hashedPassword = await bcrypt.hash(
     userData.password,
     Number(config.bcrypt_salt_rounds)
@@ -76,7 +84,7 @@ const getUserByUserName = async (username: string) => {
     attributes: { exclude: ["password"] },
   });
   if (!user) {
-    throw new Error("User Not Found");
+    throw new ApiError(httpStatus.BAD_REQUEST, "User Not Found");
   }
 
   return user;

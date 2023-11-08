@@ -1,18 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // multerHelper.js
 import fs from "fs";
-import multer from "multer";
 import path from "path";
-// Configure the storage for multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
+// const upload = multer({ dest: "./public/data/uploads/" });
 
-const upload = multer({ storage: storage });
+// const uploadDir = "./public/data/uploads/";
+
+// // Configure the storage for multer
+// const storage = multer.diskStorage({
+//   destination: uploadDir,
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   },
+// });
+
+// const upload = multer({ storage: storage });
 
 const generateNewName = (prefix: string) => {
   const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
@@ -20,31 +22,49 @@ const generateNewName = (prefix: string) => {
 };
 
 // Custom file handling logic
-const handleFileUpload = (file) => {
+const handleFileUpload = (file: any, uploadDir: string | undefined) => {
+  let dirtory: string;
+  if (uploadDir === undefined) {
+    dirtory = "./public/data/uploads/";
+  } else {
+    dirtory = uploadDir;
+  }
+
   return new Promise((resolve, reject) => {
     try {
-      if (file) {
-        const extention = path.extname(file.originalname);
-        const oldPath = file.path;
+      if (file[0] && file[0].filepath) {
+        const extension = path.extname(file[0].originalFilename);
+        const oldPath = file[0].filepath;
         const newName = generateNewName("pro_pic");
-        const newDir = path.join(__dirname, "uploads");
-        const newPath = path.join(newDir, newName + extention);
+        const newDir = path.join(dirtory);
+        const newPath = path.join(newDir, newName + extension);
 
         if (!fs.existsSync(newDir)) {
           fs.mkdirSync(newDir, { recursive: true });
         }
 
-        fs.rename(oldPath, newPath, function (err) {
+        // Copy the file to the new destination
+        fs.copyFile(oldPath, newPath, (err) => {
           if (err) {
-            console.error("Error occurred during file upload:", err);
+            console.error("Error occurred during file copy:", err);
             reject("Error occurred during file upload");
           } else {
-            console.log("File uploaded successfully");
-            const imagePath = `/uploads/${newName + extention}`; // Adjust the path as per your project structure
-            // Additional logic after file upload
-            // Add your custom logic here
-            // For example:
-            resolve(imagePath);
+            console.log("File copied successfully");
+            const imagePath = dirtory + newName + extension;
+            // Remove the original file after the copy
+            fs.unlink(oldPath, (unlinkErr) => {
+              if (unlinkErr) {
+                console.error("Error occurred during file removal:", unlinkErr);
+                reject("Error occurred during file upload");
+              } else {
+                console.log("File removed successfully");
+                // Adjust the path as per your project structure
+                // Additional logic after file upload
+                // Add your custom logic here
+                // For example:
+                resolve(imagePath);
+              }
+            });
           }
         });
       } else {
@@ -61,4 +81,4 @@ const handleFileUpload = (file) => {
   });
 };
 
-export { handleFileUpload, upload };
+export { handleFileUpload };

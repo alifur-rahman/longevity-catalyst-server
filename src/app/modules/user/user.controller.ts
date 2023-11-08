@@ -9,13 +9,19 @@ import { userService } from "./user.services";
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userData = req.body;
-      // profile picture uploading system
-      if (req.file) {
-        userData.profile_photo = req.file;
+      const { fields, files } = req;
+
+      // Create a new userData object and include the profile_photo if it exists, otherwise set it to null
+      let userData = { ...fields };
+      if (files && files.profile_photo) {
+        userData = { ...userData, profile_photo: files.profile_photo };
+      } else {
+        userData = { ...userData, profile_photo: "" };
       }
+
       const user = await userService.createUser(userData);
 
+      // profile picture uploading system
       const modifyData = user.dataValues;
 
       const userDetails = (({ password, ...rest }) => rest)(modifyData);

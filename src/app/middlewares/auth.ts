@@ -1,34 +1,43 @@
-// import { NextFunction, Request, Response } from "express";
-// import httpStatus from "http-status";
-// import { Secret } from "jsonwebtoken";
-// import config from "../../config";
-// import ApiError from "../../errors/ApiError";
-// import { jwtHelpers } from "../../helpers/jwtHelpers";
+import { NextFunction, Request, Response } from "express";
+import httpStatus from "http-status";
+import { Secret } from "jsonwebtoken";
+import config from "../../config";
+import ApiError from "../../errors/ApiError";
+import { jwtHelpers } from "../../helpers/jwtHelpers";
 
-// const auth =
-//   (...requiredRoles: string[]) =>
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//       //get authorization token
-//       const token = req.headers.authorization;
-//       if (!token) {
-//         throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
-//       }
-//       // verify token
-//       let verifiedUser = null;
+const auth =
+  (...requiredRoles: string[]) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Get authorization token
+      const token = req.headers.authorization;
+      if (!token) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
+      }
 
-//       verifiedUser = jwtHelpers.verifyToken(token, config.jwt.secret as Secret);
+      // Verify token
+      const verifiedUser = jwtHelpers.verifyToken(
+        token,
+        config.jwt.secret as Secret
+      );
 
-//       req.user = verifiedUser; // role  , userid
+      // Check if verifiedUser is not null
+      if (!verifiedUser) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
+      }
 
-//       // role diye guard korar jnno
-//       if (requiredRoles.length && !requiredRoles.includes(verifiedUser.role)) {
-//         throw new ApiError(httpStatus.FORBIDDEN, "Forbidden");
-//       }
-//       next();
-//     } catch (error) {
-//       next(error);
-//     }
-//   };
+      // Role-based authorization
+      if (
+        requiredRoles.length &&
+        !requiredRoles.includes(verifiedUser.userRole)
+      ) {
+        throw new ApiError(httpStatus.FORBIDDEN, "Forbidden");
+      }
 
-// export default auth;
+      req.user = verifiedUser;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+export default auth;

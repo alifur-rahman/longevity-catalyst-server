@@ -10,6 +10,7 @@ const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { fields, files } = req;
+      // console.log(req);
 
       // Create a new userData object and include the profile_photo if it exists, otherwise set it to null
       let userData = { ...fields };

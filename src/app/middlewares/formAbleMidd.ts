@@ -8,6 +8,7 @@ const handleFormidableMiddleware = (
   next: NextFunction
 ) => {
   const form = formidable({ multiples: true });
+  console.log("jhifsdfas");
 
   form.parse(req, (err, fields, files) => {
     if (err) {
